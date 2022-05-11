@@ -2,7 +2,7 @@ from setuptools import setup
 
 version = "0.0.1"
 
-with open("README.md") as readme_file:
+with open("README.md", encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
 requirements = ["pystac", "folium", "numpy", "branca"]
