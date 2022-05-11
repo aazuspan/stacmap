@@ -50,7 +50,7 @@ setup(
         "Typing :: Typed",
     ],
     license_files=("LICENSE",),
-    license="GPLv3+",
+    license="MIT",
     packages=["stacmap"],
     test_suite="tests",
     install_requires=requirements,
