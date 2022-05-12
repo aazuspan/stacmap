@@ -18,6 +18,7 @@ def _basemap(tiles):
 def _add_footprints_to_map(
     collection: STACFeatureCollection,
     m: folium.Map,
+    name: str,
     fields=None,
     tooltip=True,
     popup=False,
@@ -34,7 +35,7 @@ def _add_footprints_to_map(
         data=collection.to_dict(),
         tooltip=tooltip,
         popup=popup,
-        name="Footprints",
+        name=f"{name} - Footprints",
         style_function=style_function,
         highlight_function=highlight_function,
     )
@@ -45,9 +46,9 @@ def _add_footprints_to_map(
     geojson.add_to(m)
 
 
-def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map):
+def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, name: str):
     features = collection.features
-    thumbnails = folium.FeatureGroup(name="Thumbnails")
+    thumbnails = folium.FeatureGroup(name=f"{name} - Thumbnails")
 
     for feat in features:
         try:
@@ -62,10 +63,10 @@ def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map):
     thumbnails.add_to(m)
 
 
-# TODO: Add item ID to tooltip/popup if possible
 def explore(
     stac,
     *,
+    name: str = None,
     bbox: List[float] = None,
     intersects: dict = None,
     prop: str = None,
@@ -86,6 +87,9 @@ def explore(
     ----------
     stac : STAC item or collection
         STAC items to explore.
+    name : str, optional
+        A name to assign to items in the layer control. If no name is given, the `collection`
+        property of the first STAC item will be used.
     bbox : list of floats
         Bounding box coordinates (west, south, east, north) to overlay on the map.
     intersects : dict
@@ -116,12 +120,17 @@ def explore(
     """
     items = get_items(stac)
     fc = STACFeatureCollection(items)
+    name = name if name is not None else items[0]["collection"]
 
     if m is None:
         m = _basemap(tiles)
-        existing_map = False
     else:
-        existing_map = True
+        # Adding layers to a map that already contains a layer control causes rendering issues.
+        # To prevent that, we manually remove the layer control and add it back later.
+        layer_controls = [
+            k for k in m._children.keys() if k.startswith("layer_control")
+        ]
+        [m._children.pop(lc) for lc in layer_controls]
 
     def style_function(x):
         return {
@@ -140,21 +149,22 @@ def explore(
 
         if categorical or force_categorical:
             cmap = cmap if cmap else "Set1"
-            _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m)
+            _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
         else:
             cmap = cmap if cmap else "RdBu_r"
-            _set_continuous_colors(collection=fc, prop=prop, cmap=cmap, m=m)
+            _set_continuous_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
     else:
         _set_fixed_color(fc, "#26bad1")
 
     if bbox is not None or intersects is not None:
         if bbox is not None and intersects is not None:
             raise ValueError("Cannot specify both `bbox` and `intersects`.")
-        _add_search_bounds(m=m, bbox=bbox, intersects=intersects)
+        _add_search_bounds(m=m, name=name, bbox=bbox, intersects=intersects)
 
     _add_footprints_to_map(
         collection=fc,
         m=m,
+        name=name,
         fields=fields,
         tooltip=tooltip,
         popup=popup,
@@ -164,15 +174,16 @@ def explore(
     )
 
     if thumbnails is True:
-        _add_thumbnails_to_map(fc, m)
+        _add_thumbnails_to_map(fc, m, name=name)
 
-    if not existing_map:
-        folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
+    # LayerControl must be added after all layers are added to the map
+    # https://github.com/python-visualization/folium/issues/1553
+    folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
 
     return m
 
 
-def _add_search_bounds(m, bbox=None, intersects=None):
+def _add_search_bounds(m, name, bbox=None, intersects=None):
     if bbox is not None:
         w, s, e, n = bbox
         coords = [
@@ -195,13 +206,13 @@ def _add_search_bounds(m, bbox=None, intersects=None):
     }
 
     geojson = folium.GeoJson(
-        data=geometry, name="Bounds", style_function=lambda _: bounds_style
+        data=geometry, name=f"{name} - Bounds", style_function=lambda _: bounds_style
     )
     geojson.add_to(m)
 
 
 def _set_continuous_colors(
-    *, collection: STACFeatureCollection, prop: str, cmap: str, m: folium.Map
+    *, collection: STACFeatureCollection, prop: str, cmap: str, m: folium.Map, name: str
 ):
     """Set the `__stacmap_color` property of each item in the collection based on the
     continuous value of the given property. Add the continuous legend to the map."""
@@ -223,11 +234,18 @@ def _set_continuous_colors(
         color = colors[color_idx]
         feat.properties["__stacmap_color"] = color
 
-    _add_continous_legend(vmin=vmin, vmax=vmax, colors=colors, caption=prop, m=m)
+    _add_continous_legend(
+        vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
+    )
 
 
 def _set_categorical_colors(
-    *, collection: STACFeatureCollection, prop: str, m: folium.Map, cmap: str = "Set1"
+    *,
+    collection: STACFeatureCollection,
+    prop: str,
+    m: folium.Map,
+    cmap: str = "Set1",
+    name: str,
 ) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
     categorical value of the given property. Add the categorical legend to the map"""
@@ -248,7 +266,9 @@ def _set_categorical_colors(
 
     # Repeat colors to at least match the number of categories to avoid missing items in legend
     all_colors = colors * (len(categories) // len(colors) + 1)
-    _add_categorical_legend(categories=categories, colors=all_colors, caption=prop, m=m)
+    _add_categorical_legend(
+        categories=categories, colors=all_colors, caption=f"{name}: {prop}", m=m
+    )
 
 
 def _set_fixed_color(collection: STACFeatureCollection, color):
