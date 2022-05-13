@@ -9,6 +9,129 @@ from stacmap.geojson import STACFeatureCollection
 from stacmap.stac import get_items
 
 
+def explore(
+    stac,
+    *,
+    name: str = None,
+    bbox: List[float] = None,
+    intersects: dict = None,
+    prop: str = None,
+    force_categorical: bool = False,
+    cmap: str = None,
+    style_kwds: dict = {},
+    highlight_kwds: dict = {},
+    m: folium.Map = None,
+    tiles: str = "OpenStreetMap",
+    tooltip: bool = True,
+    popup: bool = False,
+    fields: List[str] = None,
+    thumbnails: bool = False,
+    zoom_to: bool = True,
+) -> folium.Map:
+    """Explore STAC items through an interactive map.
+
+    Parameters
+    ----------
+    stac : STAC item or collection
+        STAC items to explore.
+    name : str, optional
+        A name to assign to items in the layer control. If no name is given, the `collection`
+        property of the first STAC item will be used.
+    bbox : list of floats
+        Bounding box coordinates (west, south, east, north) to overlay on the map.
+    intersects : dict
+        GeoJSON geometry to overlay on the map.
+    prop : str, optional
+        The STAC property to use for color-coding items.
+    force_categorical : bool, default False
+        If true, numeric properties are treated as categorical instead of continuous.
+    cmap : str, optional
+        The name of a colorbrewer colormap to apply. Ignored if no `prop` is given.
+    style_kwds: dict, default {}
+        Additional styles to be passed to folium `style_function`. If `prop` is provided, `color` and
+        `fillColor` will be set automatically and override options passed to `style_kwds`.
+    highlight_kwds: dict, default {}
+        Additional styles to be passed to folium `highlight_function`.
+    m : folium.Map
+        Existing map instance on which to draw the plot. If none is provided, a new map will be created.
+    tiles : str
+        Map tileset to use. Can choose from the list supported by Folium.
+    tooltip : bool, default True
+        If True, item metadata will be displayed on hover.
+    popup : bool, default False
+        If True, item metadata will be displayed on click.
+    fields : list
+        A list of metadata fields to display in the tooltip or popup. If not provided, all shared fields are displayed.
+        Ignored if `tooltip` and `popup` are `False`.
+    thumbnails : bool, default False
+        If true, thumbnails will be displayed on the map based on the `thumbnail` asset of each item.
+    zoom_to : bool, default False
+        If true, the map will zoom to the bounds of the items.
+    """
+    items = get_items(stac)
+    fc = STACFeatureCollection(items)
+    name = name if name is not None else items[0]["collection"]
+
+    if m is None:
+        m = _basemap(tiles)
+    else:
+        # Adding layers to a map that already contains a layer control causes rendering issues.
+        # To prevent that, we manually remove the layer control and add it back later.
+        layer_controls = [
+            k for k in m._children.keys() if k.startswith("layer_control")
+        ]
+        [m._children.pop(lc) for lc in layer_controls]
+
+    def style_function(x):
+        if prop is not None:
+            style_kwds["color"] = x["properties"]["__stacmap_color"]
+            style_kwds["fillColor"] = x["properties"]["__stacmap_color"]
+
+        return style_kwds
+
+    def highlight_function(_):
+        return highlight_kwds
+
+    if prop is not None:
+        values = fc.get_values(prop)
+        categorical = not np.issubdtype(values.dtype, np.number)
+
+        if categorical or force_categorical:
+            cmap = cmap if cmap else "Set1"
+            _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
+        else:
+            cmap = cmap if cmap else "RdBu_r"
+            _set_continuous_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
+    else:
+        _set_fixed_color(fc, "#26bad1")
+
+    if bbox is not None or intersects is not None:
+        if bbox is not None and intersects is not None:
+            raise ValueError("Cannot specify both `bbox` and `intersects`.")
+        _add_search_bounds(m=m, name=name, bbox=bbox, intersects=intersects)
+
+    _add_footprints_to_map(
+        collection=fc,
+        m=m,
+        name=name,
+        fields=fields,
+        tooltip=tooltip,
+        popup=popup,
+        zoom_to=zoom_to,
+        style_function=style_function,
+        highlight_function=highlight_function,
+    )
+
+    if thumbnails is True:
+        _add_thumbnails_to_map(fc, m, name=name)
+
+    # LayerControl must be added after all layers are added to the map
+    # https://github.com/python-visualization/folium/issues/1553
+    folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
+
+    return m
+
+
 def _basemap(tiles):
     m = folium.Map(tiles=tiles)
     folium.plugins.Fullscreen().add_to(m)
@@ -61,126 +184,6 @@ def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, nam
         overlay.add_to(thumbnails)
 
     thumbnails.add_to(m)
-
-
-def explore(
-    stac,
-    *,
-    name: str = None,
-    bbox: List[float] = None,
-    intersects: dict = None,
-    prop: str = None,
-    force_categorical: bool = False,
-    cmap: str = None,
-    highlight: bool = True,
-    m: folium.Map = None,
-    tiles: str = "OpenStreetMap",
-    tooltip: bool = True,
-    popup: bool = False,
-    fields: List[str] = None,
-    thumbnails: bool = False,
-    zoom_to: bool = True,
-) -> folium.Map:
-    """Explore STAC items through an interactive map.
-
-    Parameters
-    ----------
-    stac : STAC item or collection
-        STAC items to explore.
-    name : str, optional
-        A name to assign to items in the layer control. If no name is given, the `collection`
-        property of the first STAC item will be used.
-    bbox : list of floats
-        Bounding box coordinates (west, south, east, north) to overlay on the map.
-    intersects : dict
-        GeoJSON geometry to overlay on the map.
-    prop : str, optional
-        The STAC property to use for color-coding items.
-    force_categorical : bool, default False
-        If true, numeric properties are treated as categorical instead of continuous.
-    cmap : str, optional
-        The name of a colorbrewer colormap to apply. Ignored if no `prop` is given.
-    highlight : bool, default True
-        If True, highlight item footprints on hover.
-    m : folium.Map
-        Existing map instance on which to draw the plot. If none is provided, a new map will be created.
-    tiles : str
-        Map tileset to use. Can choose from the list supported by Folium.
-    tooltip : bool, default True
-        If True, item metadata will be displayed on hover.
-    popup : bool, default False
-        If True, item metadata will be displayed on click.
-    fields : list
-        A list of metadata fields to display in the tooltip or popup. If not provided, all shared fields are displayed.
-        Ignored if `tooltip` and `popup` are `False`.
-    thumbnails : bool, default False
-        If true, thumbnails will be displayed on the map based on the `thumbnail` asset of each item.
-    zoom_to : bool, default False
-        If true, the map will zoom to the bounds of the items.
-    """
-    items = get_items(stac)
-    fc = STACFeatureCollection(items)
-    name = name if name is not None else items[0]["collection"]
-
-    if m is None:
-        m = _basemap(tiles)
-    else:
-        # Adding layers to a map that already contains a layer control causes rendering issues.
-        # To prevent that, we manually remove the layer control and add it back later.
-        layer_controls = [
-            k for k in m._children.keys() if k.startswith("layer_control")
-        ]
-        [m._children.pop(lc) for lc in layer_controls]
-
-    def style_function(x):
-        return {
-            "fillColor": x["properties"]["__stacmap_color"],
-            "fillOpacity": 0.6,
-            "color": x["properties"]["__stacmap_color"],
-            "weight": 2.0,
-        }
-
-    def highlight_function(_):
-        return {"fillOpacity": 0.9, "weight": 4.0} if highlight else None
-
-    if prop is not None:
-        values = fc.get_values(prop)
-        categorical = not np.issubdtype(values.dtype, np.number)
-
-        if categorical or force_categorical:
-            cmap = cmap if cmap else "Set1"
-            _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
-        else:
-            cmap = cmap if cmap else "RdBu_r"
-            _set_continuous_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
-    else:
-        _set_fixed_color(fc, "#26bad1")
-
-    if bbox is not None or intersects is not None:
-        if bbox is not None and intersects is not None:
-            raise ValueError("Cannot specify both `bbox` and `intersects`.")
-        _add_search_bounds(m=m, name=name, bbox=bbox, intersects=intersects)
-
-    _add_footprints_to_map(
-        collection=fc,
-        m=m,
-        name=name,
-        fields=fields,
-        tooltip=tooltip,
-        popup=popup,
-        zoom_to=zoom_to,
-        style_function=style_function,
-        highlight_function=highlight_function,
-    )
-
-    if thumbnails is True:
-        _add_thumbnails_to_map(fc, m, name=name)
-
-    # LayerControl must be added after all layers are added to the map
-    # https://github.com/python-visualization/folium/issues/1553
-    folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
-
-    return m
 
 
 def _add_search_bounds(m, name, bbox=None, intersects=None):
