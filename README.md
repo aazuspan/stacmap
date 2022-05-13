@@ -1,13 +1,14 @@
 # stacmap
 
-Create interactive maps of [STAC](https://stacspec.org/) items.
+Create interactive maps of [STAC](https://stacspec.org/) items and collections.
+
+`stacmap` implements a plotting function similar to `geopandas.GeoDataFrame.explore`, but it can be used directly with STAC items and collections without the need to install heavier dependencies like `shapely`. Instead, `stacmap` relies on just `folium` and `pystac`.
 
 # Features
 
 - 🗺️ Explore STAC item footprints
 - 🌈 Color-code items by properties
 - 🖼️ Preview item thumbnails
-- 🪶 Lightweight, minimal dependencies (just `folium` and `pystac`)
 
 # Installation
 
