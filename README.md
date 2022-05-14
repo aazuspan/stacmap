@@ -1,5 +1,8 @@
 # stacmap
 
+[![PyPI version](https://badge.fury.io/py/stacmap.svg)](https://badge.fury.io/py/stacmap)
+[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=stable)](https://pip.pypa.io/en/stable/?badge=stable)
+
 Create interactive maps of [STAC](https://stacspec.org/) items and collections.
 
 `stacmap` implements a plotting function similar to `geopandas.GeoDataFrame.explore`, but it can be used directly with STAC items and collections without the need to install heavier dependencies like `shapely`. Instead, `stacmap` relies on just `folium` and `pystac`.
