@@ -50,7 +50,7 @@ Let's look at a simple example to see how `stacmap` simplifies plotting a STAC c
 ## Using geopandas
 
 ```python
-!pip install geopandas mapclassify matplotlib
+!pip install geopandas folium mapclassify matplotlib
 
 import geopandas as gpd
 import shapely
