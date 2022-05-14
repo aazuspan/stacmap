@@ -1,7 +1,7 @@
 # stacmap
 
 [![PyPI version](https://badge.fury.io/py/stacmap.svg)](https://badge.fury.io/py/stacmap)
-[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=stable)](https://pip.pypa.io/en/stable/?badge=stable)
+[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stacmap.readthedocs.io/en/latest/)
 
 Create interactive maps of [STAC](https://stacspec.org/) items and collections.
 
