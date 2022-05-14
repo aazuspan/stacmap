@@ -47,16 +47,45 @@ Check out [the docs](https://stacmap.readthedocs.io/en/latest/) for details or t
 
 Let's look at a simple example to see how `stacmap` simplifies plotting a STAC collection and search bounds over `geopandas`.
 
-## Using geopandas
+First, we'll load our STAC items:
 
 ```python
+from pystac_client import Client
+
+catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+bbox = (-67.008753, -9.96445, -65.615556, -8.57408)
+
+items = catalog.search(
+    collections=["sentinel-2-l2a"],
+    bbox=bbox,
+    datetime="2019-06-01/2019-06-10"
+).get_all_items()
+```
+
+Now we'll create an interactive map that shows our items and our bounding box.
+
+<table>
+
+<tr>
+<th> geopandas </th>
+<th> stacmap </th>
+</tr>
+
+<tr>
+<td>
+  
+``` python
 !pip install geopandas folium mapclassify matplotlib
 
 import geopandas as gpd
 import shapely
 import folium
 
-gdf = gpd.GeoDataFrame.from_features(items.to_dict(), crs="EPSG:4326")
+gdf = gpd.GeoDataFrame.from_features(
+    items.to_dict(), 
+    crs="EPSG:4326"
+)
 bbox_geom = shapely.geometry.mapping(shapely.geometry.box(*bbox))
 bbox_layer = folium.GeoJson(bbox_geom)
 
@@ -65,12 +94,21 @@ bbox_layer.add_to(m)
 m
 ```
 
-## Using stacmap
+</td>
+<td>
 
-```python
+``` python
 !pip install stacmap
 
 import stacmap
 
-stacmap.explore(items, prop="eo:cloud_cover", bbox=bbox)
+stacmap.explore(
+    items, 
+    prop="eo:cloud_cover", 
+    bbox=bbox
+)
 ```
+</td>
+</tr>
+
+</table>
