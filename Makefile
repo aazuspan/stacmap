@@ -37,7 +37,7 @@ docs: ## Generate Sphinx HTML documentation
 	$(MAKE) -C docs html
 
 view-docs: ## Open Sphinx HTML documentation in a browser
-	python -m webbrowser -t docs/_build/html/index.html
+	python -m webbrowser -t docs/build/html/index.html
 
 install: ## Install the package
 	pip install .
