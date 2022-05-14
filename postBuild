@@ -1,0 +1,2 @@
+# Dependencies for Binder notebook examples
+pip install pystac-client planetary-computer
