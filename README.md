@@ -2,6 +2,8 @@
 
 [![PyPI version](https://badge.fury.io/py/stacmap.svg)](https://badge.fury.io/py/stacmap)
 [![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stacmap.readthedocs.io/en/latest/)
+[![nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/aazuspan/stacmap/blob/main/docs/source/tutorials/quickstart.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aazuspan/stacmap/HEAD?labpath=docs%2Fsource%2Ftutorials%2Fquickstart.ipynb)
 
 Create interactive maps of [STAC](https://stacspec.org/) items and collections.
 
