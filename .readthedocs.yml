@@ -1,0 +1,5 @@
+name: stacmap
+requirements_file: docs/requirements.txt
+
+sphinx:
+  fail_on_warning: True
