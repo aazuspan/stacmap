@@ -1,4 +1,5 @@
 import copy
+from calendar import c
 from typing import List
 
 import branca
@@ -20,6 +21,8 @@ def explore(
     prop: str = None,
     force_categorical: bool = False,
     cmap: str = None,
+    vmin: float = None,
+    vmax: float = None,
     style_kwds: dict = {},
     highlight_kwds: dict = {},
     popup_kwds: dict = {},
@@ -53,6 +56,10 @@ def explore(
     cmap : str, optional
         The name of a colormap to apply for color-coding. By default, only `colorbrewer`
         colors are supported. Additional colors are available if `matplotlib` is installed.
+    vmin : float, optional
+        The minimum value for the color ramp. If none is given, it will be calculated from the `prop`
+    vmax : float, optional
+        The maximum value for the color ramp. If none is given, it will be calculated from the `prop`
     style_kwds: dict, default {}
         Additional styles to be passed to folium `style_function`. If `prop` is provided, `color` and
         `fillColor` will be set automatically and override options passed to `style_kwds`.
@@ -113,7 +120,15 @@ def explore(
             _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
         else:
             cmap = cmap if cmap else "RdBu_r"
-            _set_continuous_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
+            _set_continuous_colors(
+                collection=fc,
+                prop=prop,
+                cmap=cmap,
+                m=m,
+                name=name,
+                vmin=vmin,
+                vmax=vmax,
+            )
     else:
         _set_fixed_color(fc, "#26bad1")
 
@@ -239,24 +254,35 @@ def _add_search_bounds(m, name, bbox=None, intersects=None):
 
 
 def _set_continuous_colors(
-    *, collection: STACFeatureCollection, prop: str, cmap: str, m: folium.Map, name: str
+    *,
+    collection: STACFeatureCollection,
+    prop: str,
+    cmap: str,
+    m: folium.Map,
+    name: str,
+    vmin: float,
+    vmax: float,
 ):
     """Set the `__stacmap_color` property of each item in the collection based on the
     continuous value of the given property. Add the continuous legend to the map."""
     features = collection.features
-    colors = get_cmap(cmap, 255)
-    values = collection.get_values(prop)
+    n_colors = 255
+    colors = get_cmap(cmap, n_colors)
 
-    vmin = values.min()
-    vmax = values.max()
+    values = collection.get_values(prop)
+    vmin = vmin if vmin is not None else values.min()
+    vmax = vmax if vmax is not None else values.max()
 
     for feat in features:
         feat_value = feat.properties[prop]
         color_idx = (
-            int(((feat_value - vmin) / (vmax - vmin)) * (len(colors) - 1))
+            int(((feat_value - vmin) / (vmax - vmin)) * (n_colors - 1))
             if vmax != vmin
             else 0
         )
+        # Clamp the index to avoid index errors that may occur with custom vmin and vmax
+        color_idx = max(0, min(color_idx, n_colors - 1))
+
         color = colors[color_idx]
         feat.properties["__stacmap_color"] = color
 
