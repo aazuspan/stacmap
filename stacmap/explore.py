@@ -7,6 +7,7 @@ import numpy as np
 
 from stacmap.geojson import STACFeatureCollection
 from stacmap.stac import get_items
+from stacmap.utils import get_cmap
 
 
 def explore(
@@ -46,7 +47,8 @@ def explore(
     force_categorical : bool, default False
         If true, numeric properties are treated as categorical instead of continuous.
     cmap : str, optional
-        The name of a colorbrewer colormap to apply. Ignored if no `prop` is given.
+        The name of a colormap to apply for color-coding. By default, only `colorbrewer`
+        colors are supported. Additional colors are available if `matplotlib` is installed.
     style_kwds: dict, default {}
         Additional styles to be passed to folium `style_function`. If `prop` is provided, `color` and
         `fillColor` will be set automatically and override options passed to `style_kwds`.
@@ -220,8 +222,7 @@ def _set_continuous_colors(
     """Set the `__stacmap_color` property of each item in the collection based on the
     continuous value of the given property. Add the continuous legend to the map."""
     features = collection.features
-    base_colors = branca.utilities.color_brewer(cmap)
-    colors = branca.utilities.linear_gradient(base_colors, 255)
+    colors = get_cmap(cmap, 255)
     values = collection.get_values(prop)
 
     vmin = values.min()
@@ -252,25 +253,17 @@ def _set_categorical_colors(
 ) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
     categorical value of the given property. Add the categorical legend to the map"""
-    colors = branca.utilities.color_brewer(cmap, 8)
-
     features = collection.features
-    categories = []
+    categories = np.unique(collection.get_values(prop))
+    colors = get_cmap(cmap, len(categories))
 
     for feat in features:
         feat_value = feat.properties[prop]
-
-        if feat_value not in categories:
-            categories.append(feat_value)
-
-        color_idx = categories.index(feat_value) % len(colors)
-        color = colors[color_idx]
+        color = colors[np.where(categories == feat_value)[0][0]]
         feat.properties["__stacmap_color"] = color
 
-    # Repeat colors to at least match the number of categories to avoid missing items in legend
-    all_colors = colors * (len(categories) // len(colors) + 1)
     _add_categorical_legend(
-        categories=categories, colors=all_colors, caption=f"{name}: {prop}", m=m
+        categories=categories, colors=colors, caption=f"{name}: {prop}", m=m
     )
 
 
