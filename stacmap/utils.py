@@ -3,7 +3,21 @@ import numpy as np
 
 
 def get_cmap(cmap: str, n: int):
-    """Take a colormap name (or possibly a list of colors or a colormap object?) and return ???. Maybe an n-sized list of hex colors? Need to think about it."""
+    """Take a colormap name and return an n-length list of colors. matplotlib will
+    be used to parse color names if available. Otherwise, branca will be used.
+
+    Parameters
+    ----------
+    cmap : str
+        The name of the colormap to retrieve.
+    n : int
+        The number of colors to retrieve.
+
+    Returns
+    -------
+    list
+        A list of hex colors.
+    """
     try:
         import matplotlib
     except ImportError:
