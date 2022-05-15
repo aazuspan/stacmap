@@ -29,7 +29,11 @@ def explore(
     highlight_kwds: dict = {},
     popup_kwds: dict = {},
     tooltip_kwds: dict = {},
+    map_kwds: dict = {},
     m: folium.Map = None,
+    attr: str = None,
+    width: int = None,
+    height: int = None,
     tiles: str = "OpenStreetMap",
     tooltip: bool = True,
     popup: bool = False,
@@ -75,8 +79,16 @@ def explore(
         Additional styles to be passed to `folium.GeoJsonPopup`.
     tooltip_kwds: dict, default {}
         Additional styles to be passed to `folium.GeoJsonTooltip`.
+    map_kwds: dict, default {}
+        Additional styles to be passed to `folium.Map`, if an existing map `m` is not given.
     m : folium.Map
         Existing map instance on which to draw the plot. If none is provided, a new map will be created.
+    attr : str, optional
+        Attribution information for custom tile sets.
+    width : int, optional
+        Width of the map in pixels.
+    height : int, optional
+        Height of the map in pixels.
     tiles : str
         Map tileset to use. Can choose from the list supported by Folium.
     tooltip : bool, default True
@@ -98,7 +110,9 @@ def explore(
     name = name if name is not None else items[0]["collection"]
 
     if m is None:
-        m = _basemap(tiles)
+        m = _basemap(
+            tiles=tiles, attr=attr, width=width, height=height, map_kwds=map_kwds
+        )
     else:
         # Adding layers to a map that already contains a layer control causes rendering issues.
         # To prevent that, we manually remove the layer control and add it back later.
@@ -175,8 +189,15 @@ def explore(
     return m
 
 
-def _basemap(tiles):
-    m = folium.Map(tiles=tiles)
+def _basemap(tiles, attr, width, height, map_kwds):
+    # folium.Map fails with None as width or height, so only pass if they are not None
+    size_kwds = {}
+    if width is not None:
+        size_kwds["width"] = width
+    if height is not None:
+        size_kwds["height"] = height
+
+    m = folium.Map(tiles=tiles, attr=attr, **size_kwds, **map_kwds)
     folium.plugins.Fullscreen().add_to(m)
     return m
 
