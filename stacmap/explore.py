@@ -23,6 +23,8 @@ def explore(
     cmap: str = None,
     vmin: float = None,
     vmax: float = None,
+    legend: bool = True,
+    highlight: bool = True,
     style_kwds: dict = {},
     highlight_kwds: dict = {},
     popup_kwds: dict = {},
@@ -60,6 +62,10 @@ def explore(
         The minimum value for the color ramp. If none is given, it will be calculated from the `prop`
     vmax : float, optional
         The maximum value for the color ramp. If none is given, it will be calculated from the `prop`
+    legend : bool, default True
+        Whether to show a legend for the color ramp.
+    highlight : bool, default True
+        Whether to highlight items on hover.
     style_kwds: dict, default {}
         Additional styles to be passed to folium `style_function`. If `prop` is provided, `color` and
         `fillColor` will be set automatically and override options passed to `style_kwds`.
@@ -109,6 +115,10 @@ def explore(
         return style_kwds
 
     def highlight_function(_):
+        if highlight is False:
+            return {}
+
+        highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
         return highlight_kwds
 
     if prop is not None:
@@ -117,7 +127,9 @@ def explore(
 
         if categorical or force_categorical:
             cmap = cmap if cmap else "Set1"
-            _set_categorical_colors(collection=fc, prop=prop, cmap=cmap, m=m, name=name)
+            _set_categorical_colors(
+                collection=fc, prop=prop, cmap=cmap, m=m, name=name, legend=legend
+            )
         else:
             cmap = cmap if cmap else "RdBu_r"
             _set_continuous_colors(
@@ -128,6 +140,7 @@ def explore(
                 name=name,
                 vmin=vmin,
                 vmax=vmax,
+                legend=legend,
             )
     else:
         _set_fixed_color(fc, "#26bad1")
@@ -262,6 +275,7 @@ def _set_continuous_colors(
     name: str,
     vmin: float,
     vmax: float,
+    legend: bool,
 ):
     """Set the `__stacmap_color` property of each item in the collection based on the
     continuous value of the given property. Add the continuous legend to the map."""
@@ -286,9 +300,10 @@ def _set_continuous_colors(
         color = colors[color_idx]
         feat.properties["__stacmap_color"] = color
 
-    _add_continous_legend(
-        vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
-    )
+    if legend is True:
+        _add_continous_legend(
+            vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
+        )
 
 
 def _set_categorical_colors(
@@ -298,6 +313,7 @@ def _set_categorical_colors(
     m: folium.Map,
     cmap: str = "Set1",
     name: str,
+    legend: bool,
 ) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
     categorical value of the given property. Add the categorical legend to the map"""
@@ -310,12 +326,13 @@ def _set_categorical_colors(
         color = colors[np.where(categories == feat_value)[0][0]]
         feat.properties["__stacmap_color"] = color
 
-    _add_categorical_legend(
-        categories=categories, colors=colors, caption=f"{name}: {prop}", m=m
-    )
+    if legend is True:
+        _add_categorical_legend(
+            categories=categories, colors=colors, caption=f"{name}: {prop}", m=m
+        )
 
 
-def _set_fixed_color(collection: STACFeatureCollection, color):
+def _set_fixed_color(collection: STACFeatureCollection, color: str):
     """Set the `__stacmap_color` property of each item in the collection to the given color."""
     features = collection.features
 
