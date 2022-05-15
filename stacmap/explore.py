@@ -22,6 +22,8 @@ def explore(
     cmap: str = None,
     style_kwds: dict = {},
     highlight_kwds: dict = {},
+    popup_kwds: dict = {},
+    tooltip_kwds: dict = {},
     m: folium.Map = None,
     tiles: str = "OpenStreetMap",
     tooltip: bool = True,
@@ -56,6 +58,10 @@ def explore(
         `fillColor` will be set automatically and override options passed to `style_kwds`.
     highlight_kwds: dict, default {}
         Additional styles to be passed to folium `highlight_function`.
+    popup_kwds: dict, default {}
+        Additional styles to be passed to `folium.GeoJsonPopup`.
+    tooltip_kwds: dict, default {}
+        Additional styles to be passed to `folium.GeoJsonTooltip`.
     m : folium.Map
         Existing map instance on which to draw the plot. If none is provided, a new map will be created.
     tiles : str
@@ -126,6 +132,8 @@ def explore(
         zoom_to=zoom_to,
         style_function=style_function,
         highlight_function=highlight_function,
+        popup_kwds=popup_kwds,
+        tooltip_kwds=tooltip_kwds,
         add_id=add_id,
     )
 
@@ -156,6 +164,8 @@ def _add_footprints_to_map(
     style_function=None,
     highlight_function=None,
     add_id: bool = True,
+    popup_kwds: dict = {},
+    tooltip_kwds: dict = {},
 ):
     if add_id is True:
         for feature in collection.features:
@@ -165,8 +175,8 @@ def _add_footprints_to_map(
 
     fields = fields if fields else collection.get_props()
 
-    tooltip = folium.GeoJsonTooltip(fields) if tooltip else None
-    popup = folium.GeoJsonPopup(fields) if popup else None
+    tooltip = folium.GeoJsonTooltip(fields, **tooltip_kwds) if tooltip else None
+    popup = folium.GeoJsonPopup(fields, **popup_kwds) if popup else None
 
     geojson = folium.GeoJson(
         data=collection.to_dict(),
