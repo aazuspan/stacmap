@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 import branca
@@ -27,6 +28,7 @@ def explore(
     popup: bool = False,
     fields: List[str] = None,
     thumbnails: bool = False,
+    add_id: bool = True,
     zoom_to: bool = True,
 ) -> folium.Map:
     """Explore STAC items through an interactive map.
@@ -67,10 +69,12 @@ def explore(
         Ignored if `tooltip` and `popup` are `False`.
     thumbnails : bool, default False
         If true, thumbnails will be displayed on the map based on the `thumbnail` asset of each item.
+    add_id : bool, default True
+        If true, the `id` of each item will be added to its properties in the popup and tooltip.
     zoom_to : bool, default False
         If true, the map will zoom to the bounds of the items.
     """
-    items = get_items(stac)
+    items = copy.deepcopy(get_items(stac))
     fc = STACFeatureCollection(items)
     name = name if name is not None else items[0]["collection"]
 
@@ -122,6 +126,7 @@ def explore(
         zoom_to=zoom_to,
         style_function=style_function,
         highlight_function=highlight_function,
+        add_id=add_id,
     )
 
     if thumbnails is True:
@@ -150,7 +155,14 @@ def _add_footprints_to_map(
     zoom_to=True,
     style_function=None,
     highlight_function=None,
+    add_id: bool = True,
 ):
+    if add_id is True:
+        for feature in collection.features:
+            if "id" in feature.properties:
+                continue
+            feature.properties = {"id": feature.id, **feature.properties}
+
     fields = fields if fields else collection.get_props()
 
     tooltip = folium.GeoJsonTooltip(fields) if tooltip else None
