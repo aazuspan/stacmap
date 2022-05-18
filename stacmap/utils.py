@@ -1,8 +1,9 @@
-import branca
+import branca  # type: ignore
 import numpy as np
+from numpy.typing import NDArray
 
 
-def get_cmap(cmap: str, n: int):
+def get_cmap(cmap: str, n: int) -> NDArray[np.unicode_]:
     """Take a colormap name and return an n-length list of colors. matplotlib will
     be used to parse color names if available. Otherwise, branca will be used.
 
@@ -19,7 +20,7 @@ def get_cmap(cmap: str, n: int):
         A list of hex colors.
     """
     try:
-        import matplotlib
+        import matplotlib  # type: ignore
     except ImportError:
         matplotlib = None
 
