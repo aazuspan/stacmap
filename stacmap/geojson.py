@@ -1,4 +1,4 @@
-from collections import Counter
+import collections
 from typing import Any, Counter, Dict, List
 
 import numpy as np
@@ -26,7 +26,7 @@ class STACFeatureCollection:
 
     def get_props(self) -> List[str]:
         """Return a list of properties that are common to all features."""
-        props: Counter[str] = Counter()
+        props: Counter[str] = collections.Counter()
 
         for feat in self.features:
             props.update(feat.properties.keys())

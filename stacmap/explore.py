@@ -5,7 +5,6 @@ import branca  # type: ignore
 import folium  # type: ignore
 import folium.plugins  # type: ignore
 import numpy as np
-import pystac
 from numpy.typing import NDArray
 
 from stacmap.geojson import STACFeatureCollection

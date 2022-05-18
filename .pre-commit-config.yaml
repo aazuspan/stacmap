@@ -17,3 +17,10 @@ repos:
         args: [--disallow-untyped-defs, --no-implicit-optional, --warn-unused-ignores, --warn-redundant-casts, --warn-unreachable, --disallow-any-generics]
         exclude: docs|test|setup.py
         additional_dependencies: [numpy, pystac]
+
+-   repo: https://github.com/pycqa/flake8
+    rev: 4.0.0
+    hooks:
+    -   id: flake8
+        args: [--max-line-length=120]
+        exclude: docs|test|setup.py
