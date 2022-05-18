@@ -1,43 +1,45 @@
 import copy
-from calendar import c
-from typing import List
+from typing import Any, Callable, Dict, List, Optional, Union
 
-import branca
-import folium
-import folium.plugins
+import branca  # type: ignore
+import folium  # type: ignore
+import folium.plugins  # type: ignore
 import numpy as np
+import pystac
+from numpy.typing import NDArray
 
 from stacmap.geojson import STACFeatureCollection
 from stacmap.stac import get_items
+from stacmap.types import GeoJSON, ItemContainer, ItemDict
 from stacmap.utils import get_cmap
 
 
 def explore(
-    stac,
+    stac: ItemContainer,
     *,
-    name: str = None,
-    bbox: List[float] = None,
-    intersects: dict = None,
-    prop: str = None,
+    name: Optional[str] = None,
+    bbox: Optional[List[float]] = None,
+    intersects: Optional[GeoJSON] = None,
+    prop: Optional[str] = None,
     force_categorical: bool = False,
-    cmap: str = None,
-    vmin: float = None,
-    vmax: float = None,
+    cmap: Optional[str] = None,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
     legend: bool = True,
     highlight: bool = True,
-    style_kwds: dict = {},
-    highlight_kwds: dict = {},
-    popup_kwds: dict = {},
-    tooltip_kwds: dict = {},
-    map_kwds: dict = {},
-    m: folium.Map = None,
-    attr: str = None,
-    width: int = None,
-    height: int = None,
+    style_kwds: Dict[str, Any] = {},
+    highlight_kwds: Dict[str, Any] = {},
+    popup_kwds: Dict[str, Any] = {},
+    tooltip_kwds: Dict[str, Any] = {},
+    map_kwds: Dict[str, Any] = {},
+    m: Optional[folium.Map] = None,
+    attr: Optional[str] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
     tiles: str = "OpenStreetMap",
     tooltip: bool = True,
     popup: bool = False,
-    fields: List[str] = None,
+    fields: Optional[List[str]] = None,
     thumbnails: bool = False,
     add_id: bool = True,
     zoom_to: bool = True,
@@ -121,14 +123,14 @@ def explore(
         ]
         [m._children.pop(lc) for lc in layer_controls]
 
-    def style_function(x):
+    def style_function(x: ItemDict) -> Dict[str, Any]:
         if prop is not None:
             style_kwds["color"] = x["properties"]["__stacmap_color"]
             style_kwds["fillColor"] = x["properties"]["__stacmap_color"]
 
         return style_kwds
 
-    def highlight_function(_):
+    def highlight_function(_: ItemDict) -> Dict[str, Any]:
         if highlight is False:
             return {}
 
@@ -189,7 +191,13 @@ def explore(
     return m
 
 
-def _basemap(tiles, attr, width, height, map_kwds):
+def _basemap(
+    tiles: str,
+    attr: Optional[str],
+    width: Optional[Union[str, int]],
+    height: Optional[Union[str, int]],
+    map_kwds: Optional[Dict[str, Any]],
+) -> folium.Map:
     # folium.Map fails with None as width or height, so only pass if they are not None
     size_kwds = {}
     if width is not None:
@@ -206,16 +214,16 @@ def _add_footprints_to_map(
     collection: STACFeatureCollection,
     m: folium.Map,
     name: str,
-    fields=None,
-    tooltip=True,
-    popup=False,
-    zoom_to=True,
-    style_function=None,
-    highlight_function=None,
-    add_id: bool = True,
-    popup_kwds: dict = {},
-    tooltip_kwds: dict = {},
-):
+    fields: Optional[List[str]],
+    tooltip: bool,
+    popup: bool,
+    zoom_to: bool,
+    style_function: Callable[[ItemDict], Dict[str, Any]],
+    highlight_function: Callable[[ItemDict], Dict[str, Any]],
+    add_id: bool,
+    popup_kwds: Dict[str, Any],
+    tooltip_kwds: Dict[str, Any],
+) -> None:
     if add_id is True:
         for feature in collection.features:
             if "id" in feature.properties:
@@ -242,7 +250,9 @@ def _add_footprints_to_map(
     geojson.add_to(m)
 
 
-def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, name: str):
+def _add_thumbnails_to_map(
+    collection: STACFeatureCollection, m: folium.Map, name: str
+) -> None:
     features = collection.features
     thumbnails = folium.FeatureGroup(name=f"{name} - Thumbnails")
 
@@ -259,7 +269,9 @@ def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, nam
     thumbnails.add_to(m)
 
 
-def _add_search_bounds(m, name, bbox=None, intersects=None):
+def _add_search_bounds(
+    m: folium.Map, name: str, bbox: Optional[List[float]], intersects: Optional[GeoJSON]
+) -> None:
     if bbox is not None:
         w, s, e, n = bbox
         coords = [
@@ -270,7 +282,7 @@ def _add_search_bounds(m, name, bbox=None, intersects=None):
             (w, s),
         ]
         geometry = dict(type="Polygon", coordinates=[coords])
-    else:
+    elif intersects is not None:
         geometry = intersects
 
     bounds_style = {
@@ -294,10 +306,10 @@ def _set_continuous_colors(
     cmap: str,
     m: folium.Map,
     name: str,
-    vmin: float,
-    vmax: float,
+    vmin: Optional[float],
+    vmax: Optional[float],
     legend: bool,
-):
+) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
     continuous value of the given property. Add the continuous legend to the map."""
     features = collection.features
@@ -332,7 +344,7 @@ def _set_categorical_colors(
     collection: STACFeatureCollection,
     prop: str,
     m: folium.Map,
-    cmap: str = "Set1",
+    cmap: str,
     name: str,
     legend: bool,
 ) -> None:
@@ -353,7 +365,7 @@ def _set_categorical_colors(
         )
 
 
-def _set_fixed_color(collection: STACFeatureCollection, color: str):
+def _set_fixed_color(collection: STACFeatureCollection, color: str) -> None:
     """Set the `__stacmap_color` property of each item in the collection to the given color."""
     features = collection.features
 
@@ -361,7 +373,9 @@ def _set_fixed_color(collection: STACFeatureCollection, color: str):
         feat.properties["__stacmap_color"] = color
 
 
-def _add_continous_legend(vmin, vmax, colors, caption, m):
+def _add_continous_legend(
+    vmin: float, vmax: float, colors: NDArray[np.unicode_], caption: str, m: folium.Map
+) -> None:
     """Add a continous legend color ramp to the map."""
     color_ramp = branca.colormap.LinearColormap(
         colors=colors, vmin=vmin, vmax=vmax, caption=caption
@@ -369,7 +383,12 @@ def _add_continous_legend(vmin, vmax, colors, caption, m):
     color_ramp.add_to(m)
 
 
-def _add_categorical_legend(categories, colors, caption, m):
+def _add_categorical_legend(
+    categories: NDArray[np.unicode_],
+    colors: NDArray[np.unicode_],
+    caption: str,
+    m: folium.Map,
+) -> None:
     """Add a categorical legend to the map.
 
     This implementation is written by Michel Metran (@michelmetran) and released on GitHub
