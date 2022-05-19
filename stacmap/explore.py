@@ -174,7 +174,7 @@ def explore(
             )
 
             if legend is True:
-                _add_continous_legend(
+                _add_continuous_legend(
                     vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
                 )
 
@@ -354,10 +354,10 @@ def _set_categorical_colors(
         feat.properties["__stacmap_color"] = color
 
 
-def _add_continous_legend(
+def _add_continuous_legend(
     vmin: float, vmax: float, colors: NDArray[np.unicode_], caption: str, m: folium.Map
 ) -> None:
-    """Add a continous legend color ramp to the map."""
+    """Add a continuous legend color ramp to the map."""
     color_ramp = branca.colormap.LinearColormap(
         colors=colors, vmin=vmin, vmax=vmax, caption=caption
     )
