@@ -109,6 +109,7 @@ def explore(
     items = copy.deepcopy(get_items(stac))
     fc = STACFeatureCollection(items)
     name = name if name is not None else items[0]["collection"]
+    highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
 
     if m is None:
         m = _basemap(
@@ -123,42 +124,59 @@ def explore(
         [m._children.pop(lc) for lc in layer_controls]
 
     def style_function(x: ItemDict) -> Dict[str, Any]:
-        if prop is not None:
-            style_kwds["color"] = x["properties"]["__stacmap_color"]
-            style_kwds["fillColor"] = x["properties"]["__stacmap_color"]
+        item_style = style_kwds.copy()
 
-        return style_kwds
+        if prop is not None:
+            item_style["color"] = x["properties"]["__stacmap_color"]
+            item_style["fillColor"] = x["properties"]["__stacmap_color"]
+
+        return item_style
 
     def highlight_function(_: ItemDict) -> Dict[str, Any]:
         if highlight is False:
             return {}
 
-        highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
         return highlight_kwds
 
     if prop is not None:
         values = fc.get_values(prop)
-        categorical = not np.issubdtype(values.dtype, np.number)
+        categorical = force_categorical is True or not np.issubdtype(
+            values.dtype, np.number
+        )
 
-        if categorical or force_categorical:
+        if categorical:
+            categories = np.unique(values)
+
             cmap = cmap if cmap else "Set1"
-            _set_categorical_colors(
-                collection=fc, prop=prop, cmap=cmap, m=m, name=name, legend=legend
-            )
+            n_colors = len(categories)
+            colors = get_cmap(cmap, n_colors)
+
+            _set_categorical_colors(collection=fc, prop=prop, colors=colors)
+
+            if legend is True:
+                _add_categorical_legend(
+                    categories=categories, colors=colors, caption=f"{name}: {prop}", m=m
+                )
         else:
+            vmin = vmin if vmin is not None else values.min()
+            vmax = vmax if vmax is not None else values.max()
+
             cmap = cmap if cmap else "RdBu_r"
+            n_colors = 255
+            colors = get_cmap(cmap, n_colors)
+
             _set_continuous_colors(
                 collection=fc,
                 prop=prop,
-                cmap=cmap,
-                m=m,
-                name=name,
+                colors=colors,
                 vmin=vmin,
                 vmax=vmax,
-                legend=legend,
             )
-    else:
-        _set_fixed_color(fc, "#26bad1")
+
+            if legend is True:
+                _add_continous_legend(
+                    vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
+                )
 
     if bbox is not None or intersects is not None:
         if bbox is not None and intersects is not None:
@@ -285,10 +303,7 @@ def _add_search_bounds(
         geometry = intersects
 
     bounds_style = {
-        "fillOpacity": 0.1,
-        "fillColor": "#000000",
-        "color": "#6e6e6e",
-        "weight": 1.0,
+        "fill": False,
         "interactive": False,
     }
 
@@ -302,22 +317,14 @@ def _set_continuous_colors(
     *,
     collection: STACFeatureCollection,
     prop: str,
-    cmap: str,
-    m: folium.Map,
-    name: str,
-    vmin: Optional[float],
-    vmax: Optional[float],
-    legend: bool,
+    colors: NDArray[np.unicode_],
+    vmin: float,
+    vmax: float,
 ) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
-    continuous value of the given property. Add the continuous legend to the map."""
+    continuous value of the given property."""
     features = collection.features
-    n_colors = 255
-    colors = get_cmap(cmap, n_colors)
-
-    values = collection.get_values(prop)
-    vmin = vmin if vmin is not None else values.min()
-    vmax = vmax if vmax is not None else values.max()
+    n_colors = len(colors)
 
     for feat in features:
         feat_value = feat.properties[prop]
@@ -332,43 +339,18 @@ def _set_continuous_colors(
         color = colors[color_idx]
         feat.properties["__stacmap_color"] = color
 
-    if legend is True:
-        _add_continous_legend(
-            vmin=vmin, vmax=vmax, colors=colors, caption=f"{name}: {prop}", m=m
-        )
-
 
 def _set_categorical_colors(
-    *,
-    collection: STACFeatureCollection,
-    prop: str,
-    m: folium.Map,
-    cmap: str,
-    name: str,
-    legend: bool,
+    *, collection: STACFeatureCollection, prop: str, colors: NDArray[np.unicode_]
 ) -> None:
     """Set the `__stacmap_color` property of each item in the collection based on the
     categorical value of the given property. Add the categorical legend to the map"""
     features = collection.features
     categories = np.unique(collection.get_values(prop))
-    colors = get_cmap(cmap, len(categories))
 
     for feat in features:
         feat_value = feat.properties[prop]
         color = colors[np.where(categories == feat_value)[0][0]]
-        feat.properties["__stacmap_color"] = color
-
-    if legend is True:
-        _add_categorical_legend(
-            categories=categories, colors=colors, caption=f"{name}: {prop}", m=m
-        )
-
-
-def _set_fixed_color(collection: STACFeatureCollection, color: str) -> None:
-    """Set the `__stacmap_color` property of each item in the collection to the given color."""
-    features = collection.features
-
-    for feat in features:
         feat.properties["__stacmap_color"] = color
 
 
