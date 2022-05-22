@@ -7,7 +7,7 @@ with open("README.md", encoding="utf-8") as readme_file:
 
 requirements = ["pystac", "folium", "numpy", "branca"]
 doc_requirements = ["nbsphinx", "sphinx", "sphinx_rtd_theme"]
-test_requirements = ["pytest"]
+test_requirements = ["pytest", "coverage"]
 dev_requirements = (
     [
         "pre-commit",
