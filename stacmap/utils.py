@@ -32,5 +32,6 @@ def get_cmap(cmap: str, n: int) -> NDArray[np.unicode_]:
         return branca.utilities.linear_gradient(base_colors, n)
     except ValueError:
         raise ValueError(
-            f"Unrecognized cmap: `{cmap}`. Installing matplotlib with `pip install matplotlib` may resolve this error."
+            f"Unrecognized cmap: `{cmap}`. Installing matplotlib with `pip install matplotlib` may"
+            " resolve this error."
         ) from None

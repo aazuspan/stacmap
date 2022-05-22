@@ -39,18 +39,14 @@ def test_continuous_prop():
 
 
 def test_categorical_prop():
-    m = stacmap.explore(
-        TEST_ITEM_COLLECTION, prop="eo:cloud_cover", force_categorical=True
-    )
+    m = stacmap.explore(TEST_ITEM_COLLECTION, prop="eo:cloud_cover", force_categorical=True)
     m.render()
 
     layer_control = _get_first_child(m, "layer_control")
     assert "planet-disaster-data - Footprints" in layer_control.overlays
 
     html = _fetch_map_string(m)
-    assert (
-        "<div class='legend-title'>planet-disaster-data: eo:cloud_cover</div>" in html
-    )
+    assert "<div class='legend-title'>planet-disaster-data: eo:cloud_cover</div>" in html
     assert "<li><span style='background:#e41a1c'></span>0</li>" in html
 
 
@@ -59,10 +55,7 @@ def test_no_legend():
     m.render()
 
     html = _fetch_map_string(m)
-    assert (
-        "<div class='legend-title'>planet-disaster-data: eo:cloud_cover</div>"
-        not in html
-    )
+    assert "<div class='legend-title'>planet-disaster-data: eo:cloud_cover</div>" not in html
 
 
 def test_existing_map():
@@ -76,9 +69,7 @@ def test_existing_map():
 
 
 def test_map_kwds():
-    m = stacmap.explore(
-        TEST_ITEM_COLLECTION, width=300, height=150, map_kwds={"zoomStart": 14}
-    )
+    m = stacmap.explore(TEST_ITEM_COLLECTION, width=300, height=150, map_kwds={"zoomStart": 14})
     assert m.width[0] == 300.0
     assert m.height[0] == 150.0
     assert m.options["zoomStart"] == 14
@@ -129,9 +120,7 @@ def test_style():
 
     # Prop-derived color should overwrite `color` and `fillColor` in style_kwds
     style_kwds = {"color": "red", "fillOpacity": 0.9, "stroke": False}
-    m = stacmap.explore(
-        TEST_ITEM_COLLECTION, prop="eo:cloud_cover", style_kwds=style_kwds
-    )
+    m = stacmap.explore(TEST_ITEM_COLLECTION, prop="eo:cloud_cover", style_kwds=style_kwds)
     layer = _get_first_child(m, "geo_json")
     item = copy.deepcopy(TEST_ITEM.to_dict())
     item["properties"]["__stacmap_color"] = "cyan"

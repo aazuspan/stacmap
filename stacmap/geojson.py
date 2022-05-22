@@ -31,20 +31,14 @@ class STACFeatureCollection:
         for feat in self.features:
             props.update(feat.properties.keys())
 
-        return [
-            k
-            for k, v in props.items()
-            if v == len(self.features) and k not in HIDDEN_PROPS
-        ]
+        return [k for k, v in props.items() if v == len(self.features) and k not in HIDDEN_PROPS]
 
     def get_values(self, prop: str) -> NDArray[Any]:
         """Get all feature values for a given property."""
         props = self.get_props()
 
         if prop not in props:
-            raise ValueError(
-                f"Not all items have the property `{prop}`. Choose from `{props}`."
-            )
+            raise ValueError(f"Not all items have the property `{prop}`. Choose from `{props}`.")
         return np.array([feature.get_value(prop) for feature in self.features])
 
 

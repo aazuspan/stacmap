@@ -19,11 +19,22 @@ def explore(
     name: Optional[str] = None,
     bbox: Optional[List[float]] = None,
     intersects: Optional[GeoJSON] = None,
+    thumbnails: bool = False,
     prop: Optional[str] = None,
-    force_categorical: bool = False,
     cmap: Optional[str] = None,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
+    force_categorical: bool = False,
+    tooltip: bool = True,
+    popup: bool = False,
+    fields: Optional[List[str]] = None,
+    add_id: bool = True,
+    m: Optional[folium.Map] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+    tiles: str = "OpenStreetMap",
+    attr: Optional[str] = None,
+    zoom_to: bool = True,
     legend: bool = True,
     layer_control: bool = True,
     highlight: bool = True,
@@ -32,17 +43,6 @@ def explore(
     popup_kwds: Dict[str, Any] = {},
     tooltip_kwds: Dict[str, Any] = {},
     map_kwds: Dict[str, Any] = {},
-    m: Optional[folium.Map] = None,
-    attr: Optional[str] = None,
-    width: Optional[int] = None,
-    height: Optional[int] = None,
-    tiles: str = "OpenStreetMap",
-    tooltip: bool = True,
-    popup: bool = False,
-    fields: Optional[List[str]] = None,
-    thumbnails: bool = False,
-    add_id: bool = True,
-    zoom_to: bool = True,
 ) -> folium.Map:
     """Explore STAC items through an interactive map.
 
@@ -51,23 +51,49 @@ def explore(
     stac : STAC item or collection
         STAC items to explore.
     name : str, optional
-        A name to assign to items in the layer control. If no name is given, the `collection`
-        property of the first STAC item will be used.
+        A name to assign to items in the layer control and legend. If no name is given, the
+        `collection` property of the first STAC item will be used.
     bbox : list of floats
         Bounding box coordinates (west, south, east, north) to overlay on the map.
     intersects : dict
         GeoJSON geometry to overlay on the map.
+    thumbnails : bool, default False
+        If true, the `thumbnail` asset of each item will be displayed on the map.
     prop : str, optional
         The STAC property to use for color-coding items.
+    cmap : str, optional
+        The name of a colormap to apply for color-coding. By default, only `colorbrewer` colors are
+        supported. Additional colors are available if `matplotlib` is installed.
+    vmin : float, optional
+        The minimum value for the color ramp. If none is given, it will be calculated from the
+        `prop`.
+    vmax : float, optional
+        The maximum value for the color ramp. If none is given, it will be calculated from the
+        `prop`.
     force_categorical : bool, default False
         If true, numeric properties are treated as categorical instead of continuous.
-    cmap : str, optional
-        The name of a colormap to apply for color-coding. By default, only `colorbrewer`
-        colors are supported. Additional colors are available if `matplotlib` is installed.
-    vmin : float, optional
-        The minimum value for the color ramp. If none is given, it will be calculated from the `prop`
-    vmax : float, optional
-        The maximum value for the color ramp. If none is given, it will be calculated from the `prop`
+    tooltip : bool, default True
+        If True, item metadata will be displayed on hover.
+    popup : bool, default False
+        If True, item metadata will be displayed on click.
+    fields : list
+        A list of metadata fields to display in the tooltip or popup. If not provided, all shared
+        fields are displayed. Ignored if `tooltip` and `popup` are `False`.
+    add_id : bool, default True
+        If true, the `id` of each item will be added to its properties in the popup and tooltip.
+    m : folium.Map
+        Existing :external:class:`~folium.folium.Map` instance on which to draw the plot. If none is
+        provided, a new map will be created.
+    width : int, optional
+        Width of the map in pixels.
+    height : int, optional
+        Height of the map in pixels.
+    tiles : str
+        Map tileset to use, supported by :external:class:`~folium.folium.Map`.
+    attr : str, optional
+        Attribution information for custom tile sets.
+    zoom_to : bool, default False
+        If true, the map will zoom to the bounds of the items.
     legend : bool, default True
         Whether to show a legend for the color ramp.
     layer_control : bool, default True
@@ -75,39 +101,32 @@ def explore(
     highlight : bool, default True
         Whether to highlight items on hover.
     style_kwds: dict, default {}
-        Additional styles to be passed to folium `style_function`. If `prop` is provided, `color` and
-        `fillColor` will be set automatically and override options passed to `style_kwds`.
+        Additional styles to be passed to the `style_function` of
+        :external:class:`~folium.features.GeoJson`. If `prop` is provided, `color` and `fillColor`
+        will be set automatically and override options passed to `style_kwds`.
     highlight_kwds: dict, default {}
-        Additional styles to be passed to folium `highlight_function`.
-    popup_kwds: dict, default {}
-        Additional styles to be passed to `folium.GeoJsonPopup`.
+        Additional styles to be passed to the `highlight_function` of
+        :external:class:`~folium.features.GeoJson`.
     tooltip_kwds: dict, default {}
-        Additional styles to be passed to `folium.GeoJsonTooltip`.
+        Additional styles to be passed to :external:class:`~folium.features.GeoJsonTooltip`.
+    popup_kwds: dict, default {}
+        Additional styles to be passed to :external:class:`~folium.features.GeoJsonPopup`.
     map_kwds: dict, default {}
-        Additional styles to be passed to `folium.Map`, if an existing map `m` is not given.
-    m : folium.Map
-        Existing map instance on which to draw the plot. If none is provided, a new map will be created.
-    attr : str, optional
-        Attribution information for custom tile sets.
-    width : int, optional
-        Width of the map in pixels.
-    height : int, optional
-        Height of the map in pixels.
-    tiles : str
-        Map tileset to use. Can choose from the list supported by Folium.
-    tooltip : bool, default True
-        If True, item metadata will be displayed on hover.
-    popup : bool, default False
-        If True, item metadata will be displayed on click.
-    fields : list
-        A list of metadata fields to display in the tooltip or popup. If not provided, all shared fields are displayed.
-        Ignored if `tooltip` and `popup` are `False`.
-    thumbnails : bool, default False
-        If true, thumbnails will be displayed on the map based on the `thumbnail` asset of each item.
-    add_id : bool, default True
-        If true, the `id` of each item will be added to its properties in the popup and tooltip.
-    zoom_to : bool, default False
-        If true, the map will zoom to the bounds of the items.
+        Additional styles to be passed to :external:class:`~folium.folium.Map`, if an existing map
+        `m` is not given.
+
+    Returns
+    -------
+    folium.Map
+        The :external:class:`~folium.folium.Map` instance.
+
+    Examples
+    --------
+    >>> import stacmap, pystac
+    >>> catalog = pystac.Catalog.from_file(
+        "https://planet.com/data/stac/disasters/hurricane-harvey/hurricane-harvey-0831/catalog.json"
+    )
+    >>> stacmap.explore(catalog, prop="gsd", force_categorical=True)
     """
     items = copy.deepcopy(get_items(stac))
     if len(items) == 0:
@@ -118,15 +137,11 @@ def explore(
     highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
 
     if m is None:
-        m = _basemap(
-            tiles=tiles, attr=attr, width=width, height=height, map_kwds=map_kwds
-        )
+        m = _basemap(tiles=tiles, attr=attr, width=width, height=height, map_kwds=map_kwds)
     else:
         # Adding layers to a map that already contains a layer control causes rendering issues.
         # To prevent that, we manually remove the layer control and add it back later.
-        layer_controls = [
-            k for k in m._children.keys() if k.startswith("layer_control")
-        ]
+        layer_controls = [k for k in m._children.keys() if k.startswith("layer_control")]
         [m._children.pop(lc) for lc in layer_controls]
 
     def style_function(x: ItemDict) -> Dict[str, Any]:
@@ -146,9 +161,7 @@ def explore(
 
     if prop is not None:
         values = fc.get_values(prop)
-        categorical = force_categorical is True or not np.issubdtype(
-            values.dtype, np.number
-        )
+        categorical = force_categorical is True or not np.issubdtype(values.dtype, np.number)
 
         if categorical:
             categories = np.unique(values)
@@ -274,9 +287,7 @@ def _add_footprints_to_map(
     geojson.add_to(m)
 
 
-def _add_thumbnails_to_map(
-    collection: STACFeatureCollection, m: folium.Map, name: str
-) -> None:
+def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, name: str) -> None:
     features = collection.features
     thumbnails = folium.FeatureGroup(name=f"{name} - Thumbnails")
 
@@ -339,9 +350,7 @@ def _set_continuous_colors(
     for feat in features:
         feat_value = feat.properties[prop]
         color_idx = (
-            int(((feat_value - vmin) / (vmax - vmin)) * (n_colors - 1))
-            if vmax != vmin
-            else 0
+            int(((feat_value - vmin) / (vmax - vmin)) * (n_colors - 1)) if vmax != vmin else 0
         )
         # Clamp the index to avoid index errors that may occur with custom vmin and vmax
         color_idx = max(0, min(color_idx, n_colors - 1))

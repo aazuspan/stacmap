@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
     "nbsphinx",
 ]
 
@@ -81,3 +82,12 @@ html_static_path = ["_static"]
 
 
 autodoc_mock_imports = ["numpy", "folium", "branca"]
+
+
+# Cross-reference links to other packages
+intersphinx_mapping = {
+    "folium": (
+        "https://python-visualization.github.io/folium/",
+        "https://python-visualization.github.io/folium/objects.inv",
+    )
+}
