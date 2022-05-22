@@ -107,6 +107,9 @@ def explore(
         If true, the map will zoom to the bounds of the items.
     """
     items = copy.deepcopy(get_items(stac))
+    if len(items) == 0:
+        raise ValueError("No STAC items were found.")
+
     fc = STACFeatureCollection(items)
     name = name if name is not None else items[0]["collection"]
     highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
@@ -283,6 +286,9 @@ def _add_thumbnails_to_map(
         overlay = folium.raster_layers.ImageOverlay(url, bounds=thumb_bounds)
         overlay.add_to(thumbnails)
 
+    if len(thumbnails._children) == 0:
+        raise ValueError("Items do not have thumbnail links.")
+
     thumbnails.add_to(m)
 
 
@@ -356,12 +362,13 @@ def _set_categorical_colors(
 
 def _add_continuous_legend(
     vmin: float, vmax: float, colors: NDArray[np.unicode_], caption: str, m: folium.Map
-) -> None:
+) -> branca.colormap.LinearColormap:
     """Add a continuous legend color ramp to the map."""
     color_ramp = branca.colormap.LinearColormap(
         colors=colors, vmin=vmin, vmax=vmax, caption=caption
     )
     color_ramp.add_to(m)
+    return color_ramp
 
 
 def _add_categorical_legend(
@@ -369,7 +376,7 @@ def _add_categorical_legend(
     colors: NDArray[np.unicode_],
     caption: str,
     m: folium.Map,
-) -> None:
+) -> branca.element.MacroElement:
     """Add a categorical legend to the map.
 
     This implementation is written by Michel Metran (@michelmetran) and released on GitHub
@@ -456,23 +463,26 @@ def _add_categorical_legend(
     macro._template = branca.element.Template(head)
     m.get_root().add_child(macro)
 
-    body = f"""
+    legend_items = "\n".join(
+        [
+            f"<li><span style='background:{color}'></span>{label}</li>"
+            for color, label in zip(colors, categories)
+        ]
+    )
+
+    legend_body = f"""
     <div id='maplegend {caption}' class='maplegend'>
         <div class='legend-title'>{caption}</div>
         <div class='legend-scale'>
-            <ul class='legend-labels'>"""
-
-    # Loop Categories
-    for label, color in zip(categories, colors):
-        body += f"""
-                <li><span style='background:{color}'></span>{label}</li>"""
-
-    body += """
+            <ul class='legend-labels'>
+                {legend_items}
             </ul>
         </div>
     </div>
     """
 
-    # Add Body
-    body = branca.element.Element(body, "legend")
-    m.get_root().html.add_child(body)
+    legend = branca.element.Element(legend_body, "legend")
+
+    m.get_root().html.add_child(legend)
+
+    return legend

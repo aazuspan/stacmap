@@ -52,3 +52,10 @@ release: ## Package and upload
 
 tests: ## Run unit tests
 	pytest .
+
+coverage: ## Run unit tests and produce a coverage HTML
+	coverage run --omit="tests/*" -m pytest . 
+	coverage html
+
+view-coverage: ## Open coverage HTML in a browser
+	python -m webbrowser -t htmlcov/index.html

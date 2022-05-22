@@ -3,3 +3,8 @@
 dist/
 *.egg-info/
 docs/build/
+htmlcov/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.coverage
