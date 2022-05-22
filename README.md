@@ -2,8 +2,10 @@
 
 [![PyPI version](https://badge.fury.io/py/stacmap.svg)](https://badge.fury.io/py/stacmap)
 [![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=latest)](https://stacmap.readthedocs.io/en/latest/)
+![Testing workflow](https://github.com/aazuspan/stacmap/actions/workflows/tests.yml/badge.svg)
 [![nbviewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.org/github/aazuspan/stacmap/blob/main/docs/source/tutorials/quickstart.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aazuspan/stacmap/HEAD?labpath=docs%2Fsource%2Ftutorials%2Fquickstart.ipynb)
+[![codecov](https://codecov.io/gh/aazuspan/stacmap/branch/main/graph/badge.svg?token=P6Z6ENOA4M)](https://codecov.io/gh/aazuspan/stacmap)
 
 Create interactive maps of [STAC](https://stacspec.org/) items and collections without the heavy dependencies and boilerplate of `geopandas.GeoDataFrame.explore`.
 
