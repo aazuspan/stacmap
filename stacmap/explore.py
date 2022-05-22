@@ -25,6 +25,7 @@ def explore(
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     legend: bool = True,
+    layer_control: bool = True,
     highlight: bool = True,
     style_kwds: Dict[str, Any] = {},
     highlight_kwds: Dict[str, Any] = {},
@@ -69,6 +70,8 @@ def explore(
         The maximum value for the color ramp. If none is given, it will be calculated from the `prop`
     legend : bool, default True
         Whether to show a legend for the color ramp.
+    layer_control : bool, default True
+        Whether to show the layer control.
     highlight : bool, default True
         Whether to highlight items on hover.
     style_kwds: dict, default {}
@@ -206,7 +209,8 @@ def explore(
 
     # LayerControl must be added after all layers are added to the map
     # https://github.com/python-visualization/folium/issues/1553
-    folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
+    if layer_control is True:
+        folium.LayerControl(hideSingleBase=True, position="topleft").add_to(m)
 
     return m
 

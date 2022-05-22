@@ -217,3 +217,13 @@ def test_add_id():
     m = stacmap.explore(test_item, name="LAYER")
     layer = _get_first_child(m, "geo_json")
     assert layer.data["features"][0]["properties"]["id"] == "MY CUSTOM ID"
+
+
+def test_layer_control():
+    m = stacmap.explore(TEST_ITEM_COLLECTION)
+    layer = _get_first_child(m, "layer_control")
+    assert layer is not None
+
+    m = stacmap.explore(TEST_ITEM_COLLECTION, layer_control=False)
+    layer = _get_first_child(m, "layer_control")
+    assert layer is None
