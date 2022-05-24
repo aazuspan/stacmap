@@ -28,6 +28,8 @@ def explore(
     tooltip: bool = True,
     popup: bool = False,
     fields: Optional[List[str]] = None,
+    extensions: Optional[List[str]] = None,
+    shared_fields: bool = False,
     add_id: bool = True,
     m: Optional[folium.Map] = None,
     width: Optional[int] = None,
@@ -77,10 +79,18 @@ def explore(
     popup : bool, default False
         If True, item metadata will be displayed on click.
     fields : list
-        A list of metadata fields to display in the tooltip or popup. If not provided, all shared
-        fields are displayed. Ignored if `tooltip` and `popup` are `False`.
+        A list of metadata fields to display in the tooltip or popup. If not provided, all fields
+        are displayed.
+    extensions : list
+        A list of STAC extension field prefixes (like `eo` or `proj`) to include in the tooltip or
+        popup. If not provided, all extensions will be included. Base STAC properties will be
+        included regardless.
+    shared_fields: bool, default False
+        If true, only fields shared by all items will be displayed in the tooltip or popup.
+        Otherwise, missing fields will be populated with `None`.
     add_id : bool, default True
-        If true, the `id` of each item will be added to its properties in the popup and tooltip.
+        If true, the STAC `id` of each item will be added to its properties in the tooltip and
+        popup.
     m : folium.Map
         Existing :external:class:`~folium.folium.Map` instance on which to draw the plot. If none is
         provided, a new map will be created.
@@ -207,6 +217,8 @@ def explore(
         m=m,
         name=name,
         fields=fields,
+        extensions=extensions,
+        shared_fields=shared_fields,
         tooltip=tooltip,
         popup=popup,
         zoom_to=zoom_to,
@@ -252,6 +264,8 @@ def _add_footprints_to_map(
     m: folium.Map,
     name: str,
     fields: Optional[List[str]],
+    extensions: Optional[List[str]],
+    shared_fields: bool,
     tooltip: bool,
     popup: bool,
     zoom_to: bool,
@@ -261,13 +275,34 @@ def _add_footprints_to_map(
     popup_kwds: Dict[str, Any],
     tooltip_kwds: Dict[str, Any],
 ) -> None:
+    if fields is None:
+        fields = (
+            collection.get_all_props() if shared_fields is False else collection.get_shared_props()
+        )
+
     if add_id is True:
+        fields = ["id"] + fields
         for feature in collection.features:
             if "id" in feature.properties:
                 continue
             feature.properties = {"id": feature.id, **feature.properties}
 
-    fields = fields if fields else collection.get_props()
+    # Filter by field extensions
+    if extensions is not None:
+        keep_fields = []
+        for field in fields:
+            split = field.split(":")
+            if len(split) == 1 or split[0] in extensions:
+                keep_fields.append(field)
+        fields = keep_fields
+
+    # Populate all missing fields with None to avoid tooltip errors
+    if shared_fields is False:
+        for feature in collection.features:
+            for field in fields:
+                if field in feature.properties:
+                    continue
+                feature.properties[field] = None
 
     tooltip = folium.GeoJsonTooltip(fields, **tooltip_kwds) if tooltip else None
     popup = folium.GeoJsonPopup(fields, **popup_kwds) if popup else None

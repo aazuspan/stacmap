@@ -24,21 +24,31 @@ class STACFeatureCollection:
     def __len__(self) -> int:
         return len(self.features)
 
-    def get_props(self) -> List[str]:
+    def get_shared_props(self) -> List[str]:
         """Return a list of properties that are common to all features."""
         props: Counter[str] = collections.Counter()
 
         for feat in self.features:
             props.update(feat.properties.keys())
 
-        return [k for k, v in props.items() if v == len(self.features) and k not in HIDDEN_PROPS]
+        return sorted(
+            [k for k, v in props.items() if v == len(self.features) and k not in HIDDEN_PROPS]
+        )
+
+    def get_all_props(self) -> List[str]:
+        """Return a list of properties from all features."""
+        props = set()
+
+        for feat in self.features:
+            props.update(feat.properties.keys())
+
+        for prop in HIDDEN_PROPS:
+            props.discard(prop)
+
+        return sorted(list(props), key=lambda x: [":" in x, x])
 
     def get_values(self, prop: str) -> NDArray[Any]:
-        """Get all feature values for a given property."""
-        props = self.get_props()
-
-        if prop not in props:
-            raise ValueError(f"Not all items have the property `{prop}`. Choose from `{props}`.")
+        """Get all feature values for a given property. The result may contain None values."""
         return np.array([feature.get_value(prop) for feature in self.features])
 
 
@@ -57,4 +67,5 @@ class STACFeature:
         return self.__dict__
 
     def get_value(self, prop: str) -> Any:
-        return self.properties[prop]
+        """Get the value of a property. If the property isn't found, return None."""
+        return self.properties.get(prop)

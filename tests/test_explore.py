@@ -156,7 +156,37 @@ def test_fields():
     layer = _get_first_child(m, "geo_json")
     tooltip = _get_first_child(layer, "geo_json_tooltip")
 
-    assert tooltip.fields == fields
+    assert tooltip.fields == ["id"] + fields
+
+
+def test_extensions():
+    extensions = ["eo"]
+    m = stacmap.explore(TEST_ITEM_COLLECTION, extensions=extensions)
+    layer = _get_first_child(m, "geo_json")
+    tooltip = _get_first_child(layer, "geo_json_tooltip")
+    assert tooltip.fields == [
+        "id",
+        "constellation",
+        "created",
+        "datetime",
+        "gsd",
+        "instruments",
+        "platform",
+        "updated",
+        "eo:cloud_cover",
+    ]
+
+
+def test_shared_fields():
+    m = stacmap.explore(TEST_ITEM_COLLECTION, shared_fields=True)
+    layer = _get_first_child(m, "geo_json")
+    tooltip = _get_first_child(layer, "geo_json_tooltip")
+    assert "constellation" not in tooltip.fields
+
+    m = stacmap.explore(TEST_ITEM_COLLECTION, shared_fields=False)
+    layer = _get_first_child(m, "geo_json")
+    tooltip = _get_first_child(layer, "geo_json_tooltip")
+    assert "constellation" in tooltip.fields
 
 
 def test_tiles():
