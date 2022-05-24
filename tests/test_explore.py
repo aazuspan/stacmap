@@ -39,7 +39,7 @@ def test_continuous_prop():
 
 
 def test_categorical_prop():
-    m = stacmap.explore(TEST_ITEM_COLLECTION, prop="eo:cloud_cover", force_categorical=True)
+    m = stacmap.explore(TEST_ITEM_COLLECTION, prop="eo:cloud_cover", categorical=True)
     m.render()
 
     layer_control = _get_first_child(m, "layer_control")

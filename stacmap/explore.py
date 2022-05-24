@@ -24,7 +24,7 @@ def explore(
     cmap: Optional[str] = None,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
-    force_categorical: bool = False,
+    categorical: bool = False,
     tooltip: bool = True,
     popup: bool = False,
     fields: Optional[List[str]] = None,
@@ -72,7 +72,7 @@ def explore(
     vmax : float, optional
         The maximum value for the color ramp. If none is given, it will be calculated from the
         `prop`.
-    force_categorical : bool, default False
+    categorical : bool, default False
         If true, numeric properties are treated as categorical instead of continuous.
     tooltip : bool, default True
         If True, item metadata will be displayed on hover.
@@ -136,7 +136,7 @@ def explore(
     >>> catalog = pystac.Catalog.from_file(
         "https://planet.com/data/stac/disasters/hurricane-harvey/hurricane-harvey-0831/catalog.json"
     )
-    >>> stacmap.explore(catalog, prop="gsd", force_categorical=True)
+    >>> stacmap.explore(catalog, prop="gsd", categorical=True)
     """
     items = copy.deepcopy(get_items(stac))
     if len(items) == 0:
@@ -171,7 +171,7 @@ def explore(
 
     if prop is not None:
         values = fc.get_values(prop)
-        categorical = force_categorical is True or not np.issubdtype(values.dtype, np.number)
+        categorical = categorical is True or not np.issubdtype(values.dtype, np.number)
 
         if categorical:
             categories = np.unique(values)
