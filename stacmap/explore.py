@@ -42,6 +42,7 @@ def explore(
     highlight: bool = True,
     style_kwds: Dict[str, Any] = {},
     highlight_kwds: Dict[str, Any] = {},
+    bounds_kwds: Dict[str, Any] = {},
     popup_kwds: Dict[str, Any] = {},
     tooltip_kwds: Dict[str, Any] = {},
     map_kwds: Dict[str, Any] = {},
@@ -117,6 +118,9 @@ def explore(
     highlight_kwds: dict, default {}
         Additional styles to be passed to the `highlight_function` of
         :external:class:`~folium.features.GeoJson`.
+    bounds_kwds: dict, default {}
+        Additional styles to be passed to :external:class:`~folium.features.GeoJson` for the
+        `bounds` or `intersects` layers.
     tooltip_kwds: dict, default {}
         Additional styles to be passed to :external:class:`~folium.features.GeoJsonTooltip`.
     popup_kwds: dict, default {}
@@ -210,7 +214,9 @@ def explore(
     if bbox is not None or intersects is not None:
         if bbox is not None and intersects is not None:
             raise ValueError("Cannot specify both `bbox` and `intersects`.")
-        _add_search_bounds(m=m, name=name, bbox=bbox, intersects=intersects)
+        _add_bounds_to_map(
+            m=m, name=name, bbox=bbox, intersects=intersects, bounds_kwds=bounds_kwds
+        )
 
     _add_footprints_to_map(
         collection=fc,
@@ -283,26 +289,18 @@ def _add_footprints_to_map(
     if add_id is True:
         fields = ["id"] + fields
         for feature in collection.features:
-            if "id" in feature.properties:
-                continue
-            feature.properties = {"id": feature.id, **feature.properties}
+            id = feature.properties.get("id", feature.id)
+            feature.properties = {"id": id, **feature.properties}
 
     # Filter by field extensions
     if extensions is not None:
-        keep_fields = []
-        for field in fields:
-            split = field.split(":")
-            if len(split) == 1 or split[0] in extensions:
-                keep_fields.append(field)
-        fields = keep_fields
+        fields = [f for f in fields if len(f.split(":")) == 1 or f.split(":")[0] in extensions]
 
     # Populate all missing fields with None to avoid tooltip errors
     if shared_fields is False:
         for feature in collection.features:
             for field in fields:
-                if field in feature.properties:
-                    continue
-                feature.properties[field] = None
+                feature.properties[field] = feature.properties.get(field)
 
     tooltip = folium.GeoJsonTooltip(fields, **tooltip_kwds) if tooltip else None
     popup = folium.GeoJsonPopup(fields, **popup_kwds) if popup else None
@@ -342,8 +340,12 @@ def _add_thumbnails_to_map(collection: STACFeatureCollection, m: folium.Map, nam
     thumbnails.add_to(m)
 
 
-def _add_search_bounds(
-    m: folium.Map, name: str, bbox: Optional[List[float]], intersects: Optional[GeoJSON]
+def _add_bounds_to_map(
+    m: folium.Map,
+    name: str,
+    bbox: Optional[List[float]],
+    intersects: Optional[GeoJSON],
+    bounds_kwds: Dict[str, Any],
 ) -> None:
     if bbox is not None:
         w, s, e, n = bbox
@@ -358,13 +360,11 @@ def _add_search_bounds(
     elif intersects is not None:
         geometry = intersects
 
-    bounds_style = {
-        "fill": False,
-        "interactive": False,
-    }
+    bounds_kwds["fill"] = bounds_kwds.get("fill", False)
+    bounds_kwds["interactive"] = bounds_kwds.get("interactive", False)
 
     geojson = folium.GeoJson(
-        data=geometry, name=f"{name} - Bounds", style_function=lambda _: bounds_style
+        data=geometry, name=f"{name} - Bounds", style_function=lambda _: bounds_kwds
     )
     geojson.add_to(m)
 
@@ -427,7 +427,7 @@ def _add_categorical_legend(
 ) -> branca.element.MacroElement:
     """Add a categorical legend to the map.
 
-    This implementation is written by Michel Metran (@michelmetran) and released on GitHub
+    Adapted from code written by Michel Metran (@michelmetran) and released on GitHub
     (https://github.com/michelmetran/package_folium) under MIT license.
     Copyright (c) 2020 Michel Metran
 
@@ -506,7 +506,6 @@ def _add_categorical_legend(
     </style>
     {% endmacro %}
     """
-    # Add CSS (on Header)
     macro = branca.element.MacroElement()
     macro._template = branca.element.Template(head)
     m.get_root().add_child(macro)

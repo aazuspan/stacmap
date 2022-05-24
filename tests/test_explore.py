@@ -129,6 +129,19 @@ def test_style():
     assert layer.style_function(item)["fillColor"] == "cyan"
 
 
+def test_bounds_kwds():
+    bbox = (0, 0, 30, 30)
+    bounds_kwds = {"color": "red", "fillOpacity": 0.9, "stroke": False, "interactive": True}
+    m = stacmap.explore(TEST_ITEM_COLLECTION, name="LAYER", bbox=bbox, bounds_kwds=bounds_kwds)
+    m.render()
+
+    layer_control = _get_first_child(m, "layer_control")
+    bounds_id = layer_control.overlays["LAYER - Bounds"]
+    bounds = m._children[bounds_id]
+
+    assert bounds.style_function(None) == bounds_kwds
+
+
 def test_tooltip_and_popup():
     m = stacmap.explore(TEST_ITEM_COLLECTION)
     layer = _get_first_child(m, "geo_json")
