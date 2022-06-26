@@ -45,7 +45,7 @@ stacmap.explore(items, prop="eo:cloud_cover")
 
 Check out [the docs](https://stacmap.readthedocs.io/en/latest/) for details or try out an [interactive notebook](https://mybinder.org/v2/gh/aazuspan/stacmap/HEAD?labpath=docs%2Fsource%2Ftutorials%2Fquickstart.ipynb) in Binder.
 
-# Compared to geopandas
+# Compared to GeoPandas
 
 Let's look at a simple example to see how `stacmap` simplifies plotting a STAC collection and search bounds over `geopandas`.
 
@@ -114,3 +114,5 @@ stacmap.explore(
 </tr>
 
 </table>
+
+Users coming from `geopandas` can check out the [transition guide](https://stacmap.readthedocs.io/en/latest/tutorials/geopandas.html) for tips on switching to the `stacmap` API
