@@ -39,6 +39,7 @@ def explore(
     zoom_to: bool = True,
     legend: bool = True,
     layer_control: bool = True,
+    control_scale: bool = True,
     highlight: bool = True,
     style_kwds: Dict[str, Any] = {},
     highlight_kwds: Dict[str, Any] = {},
@@ -110,6 +111,8 @@ def explore(
         Whether to show a legend for the color ramp.
     layer_control : bool, default True
         Whether to show the layer control.
+    control_scale : bool, default True
+        Whether to show the scale control.
     highlight : bool, default True
         Whether to highlight items on hover.
     style_kwds: dict, default {}
@@ -152,7 +155,14 @@ def explore(
     highlight_kwds["fillOpacity"] = highlight_kwds.get("fillOpacity", 0.75)
 
     if m is None:
-        m = _basemap(tiles=tiles, attr=attr, width=width, height=height, map_kwds=map_kwds)
+        m = _basemap(
+            tiles=tiles,
+            attr=attr,
+            width=width,
+            height=height,
+            control_scale=control_scale,
+            map_kwds=map_kwds,
+        )
     else:
         # Adding layers to a map that already contains a layer control causes rendering issues.
         # To prevent that, we manually remove the layer control and add it back later.
@@ -250,6 +260,7 @@ def explore(
 def _basemap(
     tiles: str,
     attr: Optional[str],
+    control_scale: bool,
     width: Optional[Union[str, int]],
     height: Optional[Union[str, int]],
     map_kwds: Optional[Dict[str, Any]],
@@ -261,7 +272,7 @@ def _basemap(
     if height is not None:
         size_kwds["height"] = height
 
-    m = folium.Map(tiles=tiles, attr=attr, **size_kwds, **map_kwds)
+    m = folium.Map(tiles=tiles, attr=attr, control_scale=control_scale, **size_kwds, **map_kwds)
     folium.plugins.Fullscreen().add_to(m)
     return m
 
