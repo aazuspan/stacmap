@@ -70,13 +70,28 @@ Now we'll create an interactive map that shows our items and our bounding box.
 <table>
 
 <tr>
-<th> geopandas </th>
 <th> stacmap </th>
+<th> geopandas </th>
 </tr>
 
 <tr>
 <td>
   
+``` python
+!pip install stacmap
+
+import stacmap
+
+stacmap.explore(
+    items, 
+    prop="eo:cloud_cover", 
+    bbox=bbox
+)
+```
+
+</td>
+<td>
+
 ``` python
 !pip install geopandas folium mapclassify matplotlib
 
@@ -96,20 +111,6 @@ bbox_layer.add_to(m)
 m
 ```
 
-</td>
-<td>
-
-``` python
-!pip install stacmap
-
-import stacmap
-
-stacmap.explore(
-    items, 
-    prop="eo:cloud_cover", 
-    bbox=bbox
-)
-```
 </td>
 </tr>
 
