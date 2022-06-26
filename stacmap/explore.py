@@ -74,7 +74,8 @@ def explore(
         The maximum value for the color ramp. If none is given, it will be calculated from the
         `prop`.
     categorical : bool, default False
-        If true, numeric properties are treated as categorical instead of continuous.
+        If true, numeric properties are treated as categorical instead of continuous. Non-numeric
+        properties are always treated as categorical.
     tooltip : bool, default True
         If True, item metadata will be displayed on hover.
     popup : bool, default False
