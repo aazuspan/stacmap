@@ -7,7 +7,8 @@ Explore `STAC <https://stacspec.org/>`_ items and collections on an interactive 
 
    $ pip install stacmap
 
-To get started, just pass a STAC item or collection to the ``stacmap.explore`` function.
+To get started, just pass a STAC item or collection to the ``stacmap.explore`` function. Check out the `quickstart guide <https://stacmap.readthedocs.io/en/latest/tutorials/quickstart.html>`_ for more information.
+
 
 .. code-block:: python
 
@@ -32,6 +33,7 @@ To get started, just pass a STAC item or collection to the ``stacmap.explore`` f
 
    <iframe src="_static/example_map.html" height="500px" width="100%"></iframe>
 
+If you're already using `geopandas.GeoDataFrame.explore <https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.explore.html>`_ with STAC and want to know why you should consider ``stacmap``, check out the `transition guide <https://stacmap.readthedocs.io/en/latest/tutorials/geopandas.html>`_.
 
 .. toctree::
    :maxdepth: 1
