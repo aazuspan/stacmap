@@ -41,9 +41,3 @@ If you're already using `geopandas.GeoDataFrame.explore <https://geopandas.org/e
 
    examples
    api_reference
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
