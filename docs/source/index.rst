@@ -34,3 +34,10 @@ To get started, just pass a STAC item or collection to the ``stacmap.explore`` f
    <iframe src="_static/example_map.html" height="500px" width="100%"></iframe>
 
 If you're already using `geopandas.GeoDataFrame.explore <https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.explore.html>`_ with STAC and want to know why you should consider ``stacmap``, check out the `transition guide <https://stacmap.readthedocs.io/en/latest/tutorials/geopandas.html>`_.
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+
+   examples
+   api_reference
