@@ -46,10 +46,13 @@ autodoc_member_order = "bysource"
 # Automatically add a Binder and Github link to all notebook example pages
 nbsphinx_prolog = """
 {% set docname = env.doc2path(env.docname, base=None) %}
-|Github|
+|Github| |Binder|
 
 .. |Github| image:: https://img.shields.io/badge/Open%20in-Github-green.svg
    :target: https://github.com/aazuspan/stacmap/blob/main/docs/{{ docname }}
+
+.. |Binder| image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/aazuspan/stacmap/HEAD?labpath=docs/source/{{ docname }}
 """
 
 nbsphinx_epilog = """
