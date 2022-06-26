@@ -11,10 +11,22 @@ def test_get_items_from_item():
     assert isinstance(item_dict[0], dict)
 
 
+def test_get_items_from_collection_dict():
+    collection_dict = get_items(TEST_ITEM_COLLECTION.to_dict())
+    assert isinstance(collection_dict, list)
+    assert isinstance(collection_dict[0], dict)
+
+
 def test_get_items_from_item_dict():
     item_dict = get_items(TEST_ITEM.to_dict())
     assert isinstance(item_dict, list)
     assert isinstance(item_dict[0], dict)
+
+
+def test_get_items_from_unknown_dict():
+    test_dict = {"foo": "bar"}
+    with pytest.raises(ValueError, match="Unrecognized STAC dictionary"):
+        get_items(test_dict)
 
 
 def test_get_items_from_list_of_items():

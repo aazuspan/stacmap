@@ -19,7 +19,12 @@ def _get_items_from_item(stac: pystac.Item) -> ItemList:
 
 @get_items.register(dict)
 def _get_items_from_item_dict(stac: ItemDict) -> ItemList:
-    return [stac]
+    if stac.get("type") == "Feature":
+        return [stac]
+    elif stac.get("type") == "FeatureCollection":
+        return [item for item in stac["features"]]
+    else:
+        raise ValueError(f"Unrecognized STAC dictionary with type `{stac.get('type')}`.")
 
 
 @get_items.register(list)
