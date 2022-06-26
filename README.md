@@ -115,4 +115,4 @@ stacmap.explore(
 
 </table>
 
-Users coming from `geopandas` can check out the [transition guide](https://stacmap.readthedocs.io/en/latest/tutorials/geopandas.html) for tips on switching to the `stacmap` API
+Users coming from `geopandas` can check out the [transition guide](https://stacmap.readthedocs.io/en/latest/tutorials/geopandas.html) for tips on switching to the `stacmap` API.
