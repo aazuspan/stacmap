@@ -14,7 +14,7 @@ def test_cmap_branca():
 
 def test_cmap_matplotlib():
     """Test that matplotlib succesfully retrieves a non-colorbrewer colormap"""
-    colors = utils.get_cmap("viridis", 31)
+    colors = utils.get_cmap("seismic", 31)
     assert len(colors) == 31
 
 
@@ -22,4 +22,5 @@ def test_cmap_matplotlib_missing():
     """Test that an error is raised if a non-colorbrewer colormap is requested without matplotlib"""
     with mock.patch.dict("sys.modules", {"matplotlib": None}):
         with pytest.raises(ValueError, match="pip install matplotlib"):
-            utils.get_cmap("viridis", 18)
+            # If this test fails, check to make sure the color hasn't been added to branca!
+            utils.get_cmap("seismic", 18)
